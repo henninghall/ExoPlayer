@@ -49,6 +49,7 @@ import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
 import com.google.android.exoplayer2.drm.MediaDrmCallback;
 import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer.DecoderInitializationException;
 import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
+import com.google.android.exoplayer2.offline.Download;
 import com.google.android.exoplayer2.offline.DownloadHelper;
 import com.google.android.exoplayer2.offline.DownloadRequest;
 import com.google.android.exoplayer2.source.BehindLiveWindowException;
@@ -76,9 +77,13 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.spherical.SphericalGLSurfaceView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.google.android.exoplayer2.upstream.cache.Cache;
+import com.google.android.exoplayer2.util.Clock;
 import com.google.android.exoplayer2.util.ErrorMessageProvider;
 import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
+
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -396,9 +401,21 @@ public class PlayerActivity extends AppCompatActivity
     if (haveStartPosition) {
       player.seekTo(startWindow, startPosition);
     }
-    player.prepare(mediaSource, !haveStartPosition, false);
+
+    String src= "https://streaming.sfanytime.com/sfa_prod/ted-for-karlekens-skull/trailer/27326_c.ism/manifest.mpd";
+
+    try {
+      Cache cache = ((DemoApplication) getApplication()).getDownloadCache();
+      MediaSource videoSource = new OurMediaSourceFactory("id", null, null, src, getApplicationContext(), cache).get();
+      trackSelector.setParameters(trackSelector.getParameters().buildUpon().setPreferredTextLanguage("sv-se"));
+      player.prepare(videoSource, !haveStartPosition, false);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     updateButtonVisibility();
   }
+
 
   @Nullable
   private MediaSource createTopLevelMediaSource(Intent intent) {
